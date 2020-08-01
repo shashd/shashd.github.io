@@ -64,9 +64,9 @@
       <category term="后端" scheme="http://yoursite.com/categories/%E5%90%8E%E7%AB%AF/"/>
     
     
-      <category term="concurrent" scheme="http://yoursite.com/tags/concurrent/"/>
-    
       <category term="java" scheme="http://yoursite.com/tags/java/"/>
+    
+      <category term="concurrent" scheme="http://yoursite.com/tags/concurrent/"/>
     
   </entry>
   
