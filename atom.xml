@@ -6,7 +6,7 @@
   <link href="/atom.xml" rel="self"/>
   
   <link href="http://yoursite.com/"/>
-  <updated>2020-07-31T07:20:35.270Z</updated>
+  <updated>2020-08-03T03:12:02.597Z</updated>
   <id>http://yoursite.com/</id>
   
   <author>
@@ -15,6 +15,32 @@
   </author>
   
   <generator uri="https://hexo.io/">Hexo</generator>
+  
+  <entry>
+    <title>数据库基础简介</title>
+    <link href="http://yoursite.com/2020/08/03/%E6%95%B0%E6%8D%AE%E5%BA%93%E5%9F%BA%E7%A1%80%E7%AE%80%E4%BB%8B/"/>
+    <id>http://yoursite.com/2020/08/03/%E6%95%B0%E6%8D%AE%E5%BA%93%E5%9F%BA%E7%A1%80%E7%AE%80%E4%BB%8B/</id>
+    <published>2020-08-03T03:11:12.000Z</published>
+    <updated>2020-08-03T03:12:02.597Z</updated>
+    
+    <content type="html"><![CDATA[<h2 id="数据库基础简介"><a href="#数据库基础简介" class="headerlink" title="数据库基础简介"></a>数据库基础简介</h2><h3 id="存储引擎"><a href="#存储引擎" class="headerlink" title="存储引擎"></a>存储引擎</h3><ul><li>innoDB</li><li>MyISAM</li><li>主要区别<ul><li>i是事务安全型的，m不是</li><li>i支持行级锁定，m粒度是表级</li><li>i不支持全文索引，m支持全文</li><li>m相对简单，效率比i更好，小型比较合适</li></ul></li><li>应用场景<ul><li>m管理非事务表，提供高速存储和检索，以及全文索引，如果需要大量的select，m更合适</li><li>i用于事务处理应用程序，支持ACID，如果需要大量的insert和update，使用i，能提高多用户并发操作的性能</li></ul></li></ul><h3 id="数据库调优"><a href="#数据库调优" class="headerlink" title="数据库调优"></a>数据库调优</h3><ul><li><p>sql优化</p><ul><li><p>SQL语句和索引的优化</p><ul><li><p>查询优化，避免全表扫描，在where/order by涉及的列上添加索引</p><p>但是索引并不是越多越好，消耗也很大（内存和时间）</p><ul><li>避免where子句中使用!=或者&lt;&gt;操作符，否则会放弃索引</li><li>避免where中对字段进行null值判断，否则放弃索引<br>可以使用默认值为数据来进行判断</li><li>like语句要谨慎，两端都使用%会放弃索引</li><li>避免where中对字段进行运算，会放弃索引</li><li>避免where中对字段进行函数操作，会放弃索引</li><li>复合索引必须保证第一个字段作为条件时，系统能正常使用</li><li><strong>当索引列有大量重复的数据时，SQL查询可能不会利用索引</strong><br>如sex字段</li><li>数值类型涉及为字符型会减慢速度</li></ul></li><li><p>in/not in谨慎使用</p><ul><li>可以使用between等进行代替</li></ul></li><li><p>避免在字段上进行计算操作</p></li><li><p>避免频繁创建数据表</p></li><li><p>拆分大的insert/update操作，提高并发性能</p></li></ul></li><li><p>数据库表结构的优化</p><ul><li>尽量不要使用DOUBLE</li><li>尽量不要使用TEXT</li><li>尽量使用TIMESTAMP<br>空间只要datetime的一般</li></ul></li></ul></li><li><p>类型和区别</p><ul><li>关系型数据库和非关系型数据库</li><li><a href="https://blog.csdn.net/aaronthon/article/details/81714528" target="_blank" rel="noopener">https://blog.csdn.net/aaronthon/article/details/81714528</a></li></ul></li></ul><h3 id="索引"><a href="#索引" class="headerlink" title="索引"></a>索引</h3><ul><li><strong>B+树</strong><ul><li>内节点只存放key，只有叶子节点存放数据</li></ul></li><li>分类<ul><li>组合索引<ul><li>多个字段建立到一个索引中，列值得组合必须唯一</li></ul></li><li>聚集索引<ul><li>数据行得物理顺序与列值（一般是主键懂得那一列）的逻辑顺序相同，一个表中只能有一个该索引</li></ul></li><li>非聚集索引<ul><li>唯一索引<ul><li>不可以有相同的值，可以为null</li></ul></li><li>普通索引<ul><li>允许出现相同的索引内容</li></ul></li><li>主键索引<ul><li>不允许出现相同的值</li></ul></li><li>全文索引<ul><li>针对值中的某个单词，但是效率低</li></ul></li></ul></li></ul></li><li>特点<ul><li>加速检索</li><li>只能创建在表上，不能创建在视图上</li><li>可以直接创建/间接创建</li><li>一个表上，一次只能使用一个索引</li></ul></li><li>优点<ul><li>唯一性索引，保证数据唯一性</li><li>加快数据检索速度</li><li>加速数据库表之间的连接</li><li>可以在查询中使用优化隐藏器，提高系统性能</li></ul></li><li>缺点<ul><li>增加、删除修改的时候，索引也需要维护，降低速度</li><li>创建和维护索引消耗时间</li><li>索引占据物理空间</li></ul></li><li>使用情况<ul><li>order by/group by/distinct</li><li>查询的字段上，建立索引</li><li>经常做表连接的属性上，建立索引</li></ul></li></ul><h3 id="事务"><a href="#事务" class="headerlink" title="事务"></a>事务</h3><ul><li><p>特性（ACID）</p><ul><li>原子性（Atomicity）<ul><li>事务里的操作要么全部做完，要么全部都不做<br>只要有一个失败，全部回滚</li></ul></li><li>一致性（Consistency）<ul><li>从一个一致性状态到另外一个一致性状态，即事务对数据完整性约束的遵循<br>如a+b=2，如果a变化，b也要做出相应的变化</li></ul></li><li>隔离性（Isolation）<ul><li>事务所作的修改在最终提交以前，对其他事务不可见</li></ul></li><li>持久性（Durability）<ul><li>一旦事务提交后，修改会永久保存在数据库中</li></ul></li></ul></li><li><p>事务隔离级别（恶果：脏读、幻读、不可重复读）</p><p><img src="https://img.mubu.com/document_image/a7e56772-953e-4e2e-89d5-f872b814a539-1033611.jpg" alt="img"></p><ul><li>READ UNCOMMITTED（未提交读）<ul><li>事务中的修改，即使没有提交，对于其他的事务也是可见的</li><li><strong>事务读取未提交的数据，称作脏读</strong></li><li>会导致很多问题，而且性能相比也没有优势，所以很少使用</li></ul></li><li>READ COMMITTED（提交读）<ul><li>大多书的默认隔离级别都是提交读（MySQL不是）</li><li><strong>一个事务从开始到提交之前，做的修改对其他的事务都是不可见的，有时也称作不可重复读</strong><br>因为两次执行同样的查询，可能会得到不一样的结果</li></ul></li><li>REPEATABLE READ（可重复读）<ul><li>解决了脏读的问题，保证了同一个事务多次读取同样的数据的结果是一致的</li><li>但是无法解决幻读的问题<ul><li><strong>幻读，值得是某个事务再读取某个范围内的记录时，另外一个事务在该范围内插入了新的数据，当之前的事务再次读取该范围的记录时，会产生幻行</strong></li></ul></li><li>InnoDB和XtraDB通过多版本并发控制解决了幻读的问题</li><li>该为MySQL默认事务隔离级别</li></ul></li><li>SERIALIZABLE（可串行化）<ul><li>最高的隔离机制，通过强制事务单位串行执行，解决了幻读的问题</li><li><strong>在读取的每一行数据上加锁，可能导致大量的超时和锁争用问题</strong></li><li>很少使用，非常需要数据一致性和可以接受无并发情况下</li></ul></li></ul></li></ul><h3 id="五种连接"><a href="#五种连接" class="headerlink" title="五种连接"></a>五种连接</h3><ul><li><p>left join</p><ul><li>返回左表中的所有记录和右表中连结字段相等的记录</li></ul></li><li><p>right join</p><ul><li>返回右表中的所有记录和左表中连结字段相等的记录</li></ul></li><li><p>inner join</p><ul><li>只返回两个表中连结字段相等的行</li></ul></li><li><p>full join …on…</p><p>全外连接</p><ul><li>就是左连接和右连接的一个合集</li></ul></li><li><p>cross join</p><p>交叉连接，也称作为笛卡尔积</p><ul><li>查询返回结果的行数等于两个表行数的乘积<br>select *from table a cross join table2 b相当于select *from table1,table2；</li></ul></li></ul><h3 id="数据库连接池"><a href="#数据库连接池" class="headerlink" title="数据库连接池"></a>数据库连接池</h3><ul><li>工作原理<ul><li>连接池的建立<ul><li>系统初始化根据系统配置建立，并且创建了几个连接对象</li><li>其中的连接不能随意创建和关闭</li><li>Java中的Vector、Stock等可以创建连接池</li></ul></li><li>连接池中连接的使用管理<ul><li><strong>核心是连接池管理策略</strong><ul><li>请求时查看是否有空闲连接<ul><li>存在，分配给客户使用</li><li>不存在，检查是否达到最大连接数<ul><li>没达到就重新创建一个连接</li><li>到达按照最大等待时间进行等待<ul><li>超出时间抛出异常</li></ul></li></ul></li></ul></li><li>释放连接<ul><li>判断连接引用次数是否超过规定值<ul><li>超过删除</li><li>没超过保留为其他客户服务</li></ul></li></ul></li></ul></li><li>避免了频繁地创建和释放带来的系统资源开销</li></ul></li><li>连接池的关闭<ul><li>关系所有连接</li><li>释放所有资源</li></ul></li></ul></li></ul><h3 id="MySQL行级锁和表级锁"><a href="#MySQL行级锁和表级锁" class="headerlink" title="MySQL行级锁和表级锁"></a>MySQL行级锁和表级锁</h3><ul><li>不同的引擎支持不同的锁</li><li>种类<ul><li>表级锁<ul><li>开销小，速度快</li><li>不会出现死锁（一次性获得sql所需的所有锁）</li><li>锁定粒度大，发生锁冲突的概率最高，并发度最低</li></ul></li><li>行级锁<ul><li>开销大，加锁慢</li><li>会出现死锁</li><li>锁定粒度最小，发生锁冲突的概率最低，并发度也最高</li></ul></li><li>适用场景<ul><li>表级锁并发度不高，适合查询为主</li><li>行级锁适合高并发，对事务完整性要求较高的系统</li></ul></li></ul></li></ul><h3 id="数据库锁"><a href="#数据库锁" class="headerlink" title="数据库锁"></a>数据库锁</h3><ul><li><p>封锁</p><p>控制并发</p><ul><li>排他锁（Exclusiive locks，简称X锁）<ul><li>只允许特定的事务T读取和修改数据对象A</li><li>其他的事务都不能向该数据对象添加锁</li></ul></li><li>共享锁（Share locks，简称S锁）<ul><li>如果添加，只允许事务T读取，但是不能修改</li><li>其他事务只能添加S锁，而不能添加X锁<br>其他事务同时可以读取数据对象</li></ul></li></ul></li><li><p>封锁协议（解决脏读、不可重复读）——待添加</p><ul><li>一级封锁协议</li><li>二级封锁协议</li><li>三级封锁协议</li></ul></li></ul>]]></content>
+    
+    <summary type="html">
+    
+      
+      
+        &lt;h2 id=&quot;数据库基础简介&quot;&gt;&lt;a href=&quot;#数据库基础简介&quot; class=&quot;headerlink&quot; title=&quot;数据库基础简介&quot;&gt;&lt;/a&gt;数据库基础简介&lt;/h2&gt;&lt;h3 id=&quot;存储引擎&quot;&gt;&lt;a href=&quot;#存储引擎&quot; class=&quot;headerlink&quot; titl
+      
+    
+    </summary>
+    
+    
+      <category term="后端" scheme="http://yoursite.com/categories/%E5%90%8E%E7%AB%AF/"/>
+    
+    
+      <category term="data base" scheme="http://yoursite.com/tags/data-base/"/>
+    
+  </entry>
   
   <entry>
     <title>分布式架构演变</title>
