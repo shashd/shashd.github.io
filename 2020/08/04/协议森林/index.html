@@ -1,0 +1,134 @@
+<!DOCTYPE html><html lang="zh-Hans"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"><meta name="description" content="协议森林"><meta name="keywords" content="net"><meta name="author" content="1105z"><meta name="copyright" content="1105z"><title>协议森林 | 1105z's Blog</title><link rel="shortcut icon" href="/melody-favicon.ico"><link rel="stylesheet" href="/css/index.css?version=1.7.0"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/font-awesome@latest/css/font-awesome.min.css?version=1.7.0"><meta name="format-detection" content="telephone=no"><meta http-equiv="x-dns-prefetch-control" content="on"><link rel="dns-prefetch" href="https://cdn.jsdelivr.net"><meta http-equiv="Cache-Control" content="no-transform"><meta http-equiv="Cache-Control" content="no-siteapp"><script src="https://v1.hitokoto.cn/?encode=js&amp;charset=utf-8&amp;select=.footer_custom_text" defer></script><script>var GLOBAL_CONFIG = { 
+  root: '/',
+  algolia: undefined,
+  localSearch: undefined,
+  copy: {
+    success: '复制成功',
+    error: '复制错误',
+    noSupport: '浏览器不支持'
+  }
+} </script><meta name="generator" content="Hexo 4.2.1"><link rel="alternate" href="/atom.xml" title="1105z's Blog" type="application/atom+xml">
+</head><body><i class="fa fa-arrow-right" id="toggle-sidebar" aria-hidden="true"></i><div id="sidebar" data-display="true"><div class="toggle-sidebar-info text-center"><span data-toggle="切换文章详情">切换站点概览</span><hr></div><div class="sidebar-toc"><div class="sidebar-toc__title">目录</div><div class="sidebar-toc__progress"><span class="progress-notice">你已经读了</span><span class="progress-num">0</span><span class="progress-percentage">%</span><div class="sidebar-toc__progress-bar"></div></div><div class="sidebar-toc__content"><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#协议森林简介"><span class="toc-number">1.</span> <span class="toc-text">协议森林简介</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#发展历史"><span class="toc-number">1.0.1.</span> <span class="toc-text">发展历史</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#Cookie"><span class="toc-number">1.0.2.</span> <span class="toc-text">Cookie</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#Session"><span class="toc-number">1.0.3.</span> <span class="toc-text">Session</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#Token"><span class="toc-number">1.0.4.</span> <span class="toc-text">Token</span></a></li></ol></li></ol></li></ol></div></div><div class="author-info hide"><div class="author-info__avatar text-center"><img src="https://images.unsplash.com/photo-1549998724-03a9e93f22f6?ixlib=rb-1.2.1&amp;ixid=eyJhcHBfaWQiOjEyMDd9&amp;auto=format&amp;fit=crop&amp;w=500&amp;q=60"></div><div class="author-info__name text-center">1105z</div><div class="author-info__description text-center"></div><hr><div class="author-info-articles"><a class="author-info-articles__archives article-meta" href="/archives"><span class="pull-left">文章</span><span class="pull-right">4</span></a><a class="author-info-articles__tags article-meta" href="/tags"><span class="pull-left">标签</span><span class="pull-right">5</span></a><a class="author-info-articles__categories article-meta" href="/categories"><span class="pull-left">分类</span><span class="pull-right">2</span></a></div></div></div><div id="content-outer"><div id="top-container" style="background-image: url(http://i2.tiimg.com/723979/c436bc694e3d2edf.jpg)"><div id="page-header"><span class="pull-left"> <a id="site-name" href="/">1105z's Blog</a></span><i class="fa fa-bars toggle-menu pull-right" aria-hidden="true"></i><span class="pull-right menus">   <a class="site-page" href="/">Home</a><a class="site-page" href="/archives">Archives</a><a class="site-page" href="/tags">Tags</a><a class="site-page" href="/categories">Categories</a></span><span class="pull-right"></span></div><div id="post-info"><div id="post-title">协议森林</div><div id="post-meta"><time class="post-meta__date"><i class="fa fa-calendar" aria-hidden="true"></i> 2020-08-04</time><span class="post-meta__separator">|</span><i class="fa fa-inbox post-meta__icon" aria-hidden="true"></i><a class="post-meta__categories" href="/categories/%E7%BD%91%E7%BB%9C/">网络</a></div></div></div><div class="layout" id="content-inner"><article id="post"><div class="article-container" id="post-content"><h2 id="协议森林简介"><a href="#协议森林简介" class="headerlink" title="协议森林简介"></a>协议森林简介</h2><h4 id="发展历史"><a href="#发展历史" class="headerlink" title="发展历史"></a>发展历史</h4><ul>
+<li>一开始基本是文档的浏览，不需要记录某段时间浏览了什么文档</li>
+<li>交互式web应用的兴起，需要管理会话<ul>
+<li>记住哪些人登录系统/往购物车中放商品，即区分出每个人</li>
+<li>发一个会话标识（session id），随机字符串，发起http请求时，将字符串发送至服务器</li>
+<li>但是服务器保存所有人的session id是一个巨大的开销<ul>
+<li>使用集群的话，session在哪个服务器上存储也是个问题</li>
+<li>有人提出及那个session id集中存储一个地方，但是增加了单点失败的可能<br>如果负责session的机器挂了，所有人需要重新登录一次</li>
+<li>也尝试将单点的机器弄出集群</li>
+</ul>
+</li>
+<li>提出思考，为什么服务器端要保存session，而不是用户端<ul>
+<li><strong>关键在于验证session id是自己生成的</strong></li>
+</ul>
+</li>
+<li>设计<ul>
+<li>登录系统后，向其发送一个令牌（token）<ul>
+<li>为了保密，使用算法，加上自己才知道的密钥，对数据做一个签名，把签名和数据一起作为token</li>
+<li>但是服务器本身并不保存token</li>
+</ul>
+</li>
+<li>下次访问直接将token通过Http header传送<ul>
+<li>使用同样的密钥和算法计算一次签名，和token中的签名作比较</li>
+<li>如果相同，可以直接获取其userId</li>
+<li>如果不同，已经被篡改</li>
+</ul>
+</li>
+<li>token中的数据是明文保存的<ul>
+<li>故而不能保存敏感数据</li>
+</ul>
+</li>
+<li>只是生成token，验证token，而不是保存session id</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<h4 id="Cookie"><a href="#Cookie" class="headerlink" title="Cookie"></a>Cookie</h4><ul>
+<li>指的是浏览器里面能永久存储的一种数据，仅仅是浏览器实现的一种数据存储功能</li>
+<li>服务器生成，发给浏览器</li>
+<li>浏览器保存目录下文件中，下一次请求该网站将cookie发送服务器</li>
+</ul>
+<h4 id="Session"><a href="#Session" class="headerlink" title="Session"></a>Session</h4><ul>
+<li>名为会话<ul>
+<li>服务器要识别出当前发送请求者的身份<ul>
+<li>故而给每个客户端分配不同的身份标识（session id）</li>
+<li>客户端发送请求给服务器都要带上</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>一般使用Cookie的方式保存Session</li>
+<li>在服务器上<ul>
+<li>使用session临时存储用户信息<br>用户离开后session销毁</li>
+<li>如果web服务器做了负载均衡，那么下一个操作请求到了另一台服务器的时候session会丢失。</li>
+</ul>
+</li>
+</ul>
+<h4 id="Token"><a href="#Token" class="headerlink" title="Token"></a>Token</h4><ul>
+<li>起源<ul>
+<li>基于服务器的验证<ul>
+<li>服务器存储Session实现</li>
+<li>逐渐暴露出问题</li>
+</ul>
+</li>
+<li>基于服务器验证方式暴露的一些问题<ul>
+<li>Seesion<ul>
+<li>服务器存储Session的开销大</li>
+</ul>
+</li>
+<li>可扩展性<ul>
+<li>使用Session存储，带来可拓展性问题</li>
+</ul>
+</li>
+<li>CORS(跨域资源共享)<ul>
+<li>数据跨多个移动设备上运行，资源共享会是个问题</li>
+</ul>
+</li>
+<li>CSRF(跨站请求伪造)<ul>
+<li>访问银行网站，容易受到跨站请求伪造的攻击</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>基于Token的验证原理<ul>
+<li>基于Token的身份验证是无状态的，我们不将用户信息存在服务器或Session中<ul>
+<li>故而解决了很多问题</li>
+</ul>
+</li>
+<li>验证过程如下<ul>
+<li>用户通过用户名和密码发送请求。</li>
+<li>程序验证。</li>
+<li>程序返回一个签名的token给客户端。</li>
+<li>客户端储存token,并且每次用于每次发送请求。</li>
+<li>服务端验证token并返回数据。</li>
+</ul>
+</li>
+<li>实现思路<ul>
+<li>用户登录校验，校验成功后就返回Token给客户端。</li>
+<li>客户端收到数据后保存在客户端</li>
+<li>客户端每次访问API是携带Token到服务器端。</li>
+<li>服务器端采用filter过滤器校验。校验成功则返回请求数据，校验失败则返回错误码</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>优点<ul>
+<li>无状态、可扩展</li>
+<li>安全性</li>
+<li>可拓展性<ul>
+<li>Tokens能够创建与其它程序共享权限的程序</li>
+</ul>
+</li>
+<li>多平台跨域</li>
+</ul>
+</li>
+</ul>
+</div></article><div class="post-meta__tag-list"><a class="post-meta__tags" href="/tags/net/">net</a></div><nav id="pagination"><div class="next-post pull-right"><a href="/2020/08/03/%E6%95%B0%E6%8D%AE%E5%BA%93%E5%9F%BA%E7%A1%80%E7%AE%80%E4%BB%8B/"><span>数据库基础简介</span><i class="fa fa-chevron-right"></i></a></div></nav></div></div><footer class="footer-bg" style="background-image: url(http://i2.tiimg.com/723979/c436bc694e3d2edf.jpg)"><div class="layout" id="footer"><div class="copyright">&copy;2020 By 1105z</div><div class="framework-info"><span>驱动 - </span><a href="http://hexo.io" target="_blank" rel="noopener"><span>Hexo</span></a><span class="footer-separator">|</span><span>主题 - </span><a href="https://github.com/Molunerfinn/hexo-theme-melody" target="_blank" rel="noopener"><span>Melody</span></a></div><div class="footer_custom_text">hitokoto</div><div class="busuanzi"><script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script><span id="busuanzi_container_page_pv"><i class="fa fa-file"></i><span id="busuanzi_value_page_pv"></span><span></span></span></div></div></footer><i class="fa fa-arrow-up" id="go-up" aria-hidden="true"></i><script src="https://cdn.jsdelivr.net/npm/animejs@latest/anime.min.js"></script><script src="https://cdn.jsdelivr.net/npm/jquery@latest/dist/jquery.min.js"></script><script src="https://cdn.jsdelivr.net/npm/@fancyapps/fancybox@latest/dist/jquery.fancybox.min.js"></script><script src="https://cdn.jsdelivr.net/npm/velocity-animate@latest/velocity.min.js"></script><script src="https://cdn.jsdelivr.net/npm/velocity-ui-pack@latest/velocity.ui.min.js"></script><script src="/js/utils.js?version=1.7.0"></script><script src="/js/fancybox.js?version=1.7.0"></script><script src="/js/sidebar.js?version=1.7.0"></script><script src="/js/copy.js?version=1.7.0"></script><script src="/js/fireworks.js?version=1.7.0"></script><script src="/js/transition.js?version=1.7.0"></script><script src="/js/scroll.js?version=1.7.0"></script><script src="/js/head.js?version=1.7.0"></script><script>if(/Android|webOS|iPhone|iPod|iPad|BlackBerry/i.test(navigator.userAgent)) {
+  $('#nav').addClass('is-mobile')
+  $('footer').addClass('is-mobile')
+  $('#top-container').addClass('is-mobile')
+}</script></body></html>
