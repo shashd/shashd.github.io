@@ -719,7 +719,91 @@
 </ul>
 <p><img src="https://gblobscdn.gitbook.com/assets%2F-L_5HvtIhTFW9TQlOF8e%2F-L_5TIKcBFHWPtY3OwUo%2F-L_5TJM1VhwmwbNGzqwJ%2F%E7%B3%BB%E7%BB%9F%E8%BF%9B%E7%A8%8B%E7%8A%B6%E6%80%81%E8%BD%AC%E6%8D%A2%E5%9B%BE.png?alt=media" alt="系统进程/线程转换图"></p>
 <hr>
-<h3 id="线程池"><a href="#线程池" class="headerlink" title="线程池"></a>线程池</h3><hr>
+<h3 id="线程池"><a href="#线程池" class="headerlink" title="线程池"></a>线程池</h3><h4 id="线程池简介"><a href="#线程池简介" class="headerlink" title="线程池简介"></a>线程池简介</h4><p>使用线程池的原因是因为人们随着线程数的增加，发现需要创建一个专门的类来管理线程的使用，否则每次发布一个任务都要新建一个线程。频繁的创建和销毁线程的系统开销很大，占据太多的内存等系统资源和频繁的上下文切换，并且可能给系统的稳定性带来比较大的危害，因为每个系统中能创建的线程都有一个上限，不可能出现可以无限量创建线程的行为。</p>
+<p><strong>使用线程池相比于手动创建线程的好处在于</strong></p>
+<pre><code>+ 线程池可以解决线程生命周期的系统开销问题，同时也可以加快相应速度。因为线程池中的线程是可以反复使用的，不是创建好了再执行任务，而是随时准备执行任务，取消了创建线程花费的时间，因而提升了相应的速度。
++ 线程池可以统筹内存和CPU的使用，避免资源不当使用。线程池会根据配置和任务数量灵活地控制线程数量，不足创建，过量回收，避免**线程过多导致内存溢出/线程太少导致CPU资源浪费**，达到了一个平衡。
++ 线程池可以统一管理资源，如任务队列和线程，可以统一开始和结束任务，更加易于管理和数据统计。</code></pre><h4 id="线程池参数的含义"><a href="#线程池参数的含义" class="headerlink" title="线程池参数的含义"></a>线程池参数的含义</h4><table>
+<thead>
+<tr>
+<th align="center">参数名称</th>
+<th align="center">含义</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="center">corePoolSize</td>
+<td align="center">核心线程数</td>
+</tr>
+<tr>
+<td align="center">maxPoolSize</td>
+<td align="center">最大线程数</td>
+</tr>
+<tr>
+<td align="center">keepAliveTime+时间单位</td>
+<td align="center">空闲线程的存活时间</td>
+</tr>
+<tr>
+<td align="center">ThreadFactory</td>
+<td align="center">线程工厂，用来创建新线程</td>
+</tr>
+<tr>
+<td align="center">workQueue</td>
+<td align="center">任务队列</td>
+</tr>
+<tr>
+<td align="center">Handler</td>
+<td align="center">处理被拒绝的任务</td>
+</tr>
+</tbody></table>
+<h4 id="创建线程的流程"><a href="#创建线程的流程" class="headerlink" title="创建线程的流程"></a>创建线程的流程</h4><p><a href="https://imgchr.com/i/ar8d2D" target="_blank" rel="noopener"><img src="https://s1.ax1x.com/2020/08/05/ar8d2D.png" alt="ar8d2D.png"></a></p>
+<h5 id="corePoolSize和maxPoolSize"><a href="#corePoolSize和maxPoolSize" class="headerlink" title="corePoolSize和maxPoolSize"></a>corePoolSize和maxPoolSize</h5><p>coolPoolSize是核心线程数，初始默认为0，有新的任务提交后就会创建核心线程，如果不做特殊处理，之后的线程数量不会小于核心线程数。如果队列满了将会创建非核心线程，最多可以达到maxPoolSize的数量，当未来线程空闲，大于coolPoolSize的线程将会被回收。</p>
+<h5 id="keepAliveTime-时间单位"><a href="#keepAliveTime-时间单位" class="headerlink" title="keepAliveTime+时间单位"></a>keepAliveTime+时间单位</h5><p>当线程数量多于核心线程数的时候，如果又没有任务可做，线程池会检测线程的keepAliveTime，超过规定时间的线程就会被销毁。可以使用setKeepAliveTime动态改变其数值。</p>
+<h5 id="workQueue和Handler"><a href="#workQueue和Handler" class="headerlink" title="workQueue和Handler"></a>workQueue和Handler</h5><p>分别对应阻塞队列和任务拒绝策略。</p>
+<h6 id="拒绝任务的时机"><a href="#拒绝任务的时机" class="headerlink" title="拒绝任务的时机"></a>拒绝任务的时机</h6><p>线程池将会在以下的情况拒绝提交新的任务到队列中</p>
+<ul>
+<li>调用shutdown等方法关闭线程池后，即使当前线程池内部仍然有线程在执行任务，提交任务也会遭受拒绝</li>
+<li>线程池没有能力处理新提交的任务。达到最大线程池并且队列已满。</li>
+</ul>
+<h6 id="拒绝策略"><a href="#拒绝策略" class="headerlink" title="拒绝策略"></a>拒绝策略</h6><p>Java在ThreadPoolExecutor中实现了四种都实现了RejectedExecutionHandler接口的默认拒绝策略。</p>
+<ul>
+<li>AbortPolicy，拒绝任务直接抛出RejectedExecutionException的RuntimeException，可以放弃或者是重试等策略</li>
+<li>DiscardPolicy，新任务提交直接被丢弃，不会有任何的通知，有着数据丢失的风险</li>
+<li>DiscardOldestPolicy，如果线程池没有被关闭并且没有能力执行，则会丢弃任务队列中的头节点，腾出空间给新的任务，也存在一定的任务丢失风险</li>
+<li>CallerRunPolicy，如果线程池没有被关闭并且没有能力执行，新任务提交后交给提交任务的线程执行，好处有两点（提交任务的线程取决于哪个线程执行submit方法，经常是主线程）<ul>
+<li>新提交的任务不会丢失，不会有业务损失</li>
+<li>提交的线程负责执行任务，执行任务又比较耗时，这段时间提交任务的线程也不会提交新的任务，减缓了任务提交的速度，相当于是给予线程池一个缓冲期</li>
+</ul>
+</li>
+</ul>
+<h4 id="六种常见线程池"><a href="#六种常见线程池" class="headerlink" title="六种常见线程池"></a>六种常见线程池</h4><h5 id="FixedThreadPool"><a href="#FixedThreadPool" class="headerlink" title="FixedThreadPool"></a>FixedThreadPool</h5><p>核心线程数和最大线程数相同，相当于是固定线程数的线程池。除了线程数量最初从0开始增加外，其他所有时候的线程数都是固定的。</p>
+<h5 id="CachedThreadPool"><a href="#CachedThreadPool" class="headerlink" title="CachedThreadPool"></a>CachedThreadPool</h5><p>缓存线程池，特点在于线程数几乎可以无限增加，理论上可以到Integer.MAX_VALUE，即2^31-1，线程空闲时仍然可以回收。提交任务后会判断是否有空闲线程，有直接分配任务，没有就新建线程执行任务。无核心线程，如果线程池检测到一定时间内没有可执行任务，最终线程甚至可以为0。</p>
+<h5 id="ScheduledThreadPool"><a href="#ScheduledThreadPool" class="headerlink" title="ScheduledThreadPool"></a>ScheduledThreadPool</h5><p>支持定时任务的线程池。实现的主要方法如下三种：</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><span class="line">ScheduledExecutorService service = Executors.newScheduledThreadPool(<span class="number">10</span>);</span><br><span class="line"><span class="comment">// 指定10s后执行一次任务就结束</span></span><br><span class="line">service.sheduled(<span class="keyword">new</span> Task(),<span class="number">10</span>,TimeUnit.SECONDS);</span><br><span class="line"><span class="comment">// 分别是第一次延迟时间和周期，周期代表第一次延时后每次延时多长时间执行一次任务</span></span><br><span class="line"><span class="comment">// 任务开始的时间为起点计算时间，时间到就执行任务，不论任务执行需要多少时间</span></span><br><span class="line">service.sheduleAtFixedRate(<span class="keyword">new</span> Task(),<span class="number">10</span>,<span class="number">10</span>,TimeUnit.SECONDS);</span><br><span class="line"><span class="comment">// 和第二种类似，不过周期定义不同，第三种以任务结束时间为下一次循环的时间起点并开始计时</span></span><br><span class="line">service.sheduleWithFixedDelay(<span class="keyword">new</span> Task,<span class="number">10</span>,<span class="number">10</span>,TimeUnit.SECONDS);</span><br></pre></td></tr></table></figure>
+
+<p>第二种方法示例，设置参数分别为10分钟和1小时：</p>
+<blockquote>
+<p> 00:00喝水，00:10喝完水，01:00喝水, 01:10喝完水, 02:00 喝水, 02:10喝完水</p>
+</blockquote>
+<p>第三种方法示例，相同的参数设置：</p>
+<blockquote>
+<p> 00:00喝水，00:10喝完水，01:10喝水, 01:20喝完水, 02:20 喝水, 02:30喝完水</p>
+</blockquote>
+<h5 id="SingleThreadExecutor"><a href="#SingleThreadExecutor" class="headerlink" title="SingleThreadExecutor"></a>SingleThreadExecutor</h5><p>使用唯一的线程执行任务。如果过程中发生异常，线程池会重建一个新的线程。一个线程非常适合需要按照提交顺序来依次执行任务的场景，而前几种都不能保证顺序。</p>
+<h5 id="SingleThreadScheduledExecutor"><a href="#SingleThreadScheduledExecutor" class="headerlink" title="SingleThreadScheduledExecutor"></a>SingleThreadScheduledExecutor</h5><p>和ScheduledThreadPool类似，只是其的一个特例，不过是将内部的核心线程数设置成1。</p>
+<h5 id="ForkJoinPool"><a href="#ForkJoinPool" class="headerlink" title="ForkJoinPool"></a>ForkJoinPool</h5><p>JDK7之后加入，主要用法和之前差不多，有两个不同之处：</p>
+<ul>
+<li><p>非常适合执行可以产生子任务的任务。如执行一个计算的任务，将任务拆分为多个，并行计算出结果之后结合，拆分即Fork，合并即Join，即为线程池的名称。</p>
+</li>
+<li><p>内部结构中，除了有一个公共的任务队列外，每个线程都有自己独立的任务队列，即双端队列deque。一旦线程的任务被Fork分裂了，线程会将子任务存入到deque中，而不是任务队列中，获取到任务的成本降低，也不会出现公共人物中争抢的情况。</p>
+<ul>
+<li>假设一个情况，线程有多个，线程t1分裂了几十个子任务。但是t0空闲，deque为空，为了提高效率，t0会帮助t1执行人物，即<code>work-stealing</code>。t1获取人物的逻辑是后进先出（LIFO），t0偷t1线程的人物逻辑是先进先出（FIFO）</li>
+</ul>
+</li>
+</ul>
+<blockquote>
+<p>综上可知，ForkJoinPool非常适合递归的任务</p>
+</blockquote>
+<hr>
 <h3 id="线程组和线程的优先级"><a href="#线程组和线程的优先级" class="headerlink" title="线程组和线程的优先级"></a>线程组和线程的优先级</h3><h4 id="线程组"><a href="#线程组" class="headerlink" title="线程组"></a>线程组</h4><p>Java中用ThreadGroup来表示线程组，可以对线程进行批量控制。每个Thread必然存在于一个ThreadGroup中，不能脱离而独立存在。执行main()方法的线程名称是main，如果创建new Thread的时候没有指定，将默认将父线程线程组设置为自己的线程组。</p>
 <p>示例：</p>
 <figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">Demo</span></span>&#123;</span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String []args)</span></span>&#123;</span><br><span class="line">        Thread myThread = <span class="keyword">new</span> Thread(() -&gt; &#123;</span><br><span class="line">            System.out.println(<span class="string">"线程组名称:"</span>+	                               			 Thread.currentThread().getThreadGroup().getName());</span><br><span class="line">            System.out.println(<span class="string">"线程名称:"</span>+	                        					Thread.currentThread().getName());</span><br><span class="line">        &#125;);</span><br><span class="line">        myThread.start();</span><br><span class="line">        System.out.println(<span class="string">"执行main方法线程名称："</span> + Thread.currentThread().getName());</span><br><span class="line"></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
