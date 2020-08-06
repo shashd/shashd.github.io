@@ -721,9 +721,16 @@
 <hr>
 <h3 id="线程池"><a href="#线程池" class="headerlink" title="线程池"></a>线程池</h3><h4 id="线程池简介"><a href="#线程池简介" class="headerlink" title="线程池简介"></a>线程池简介</h4><p>使用线程池的原因是因为人们随着线程数的增加，发现需要创建一个专门的类来管理线程的使用，否则每次发布一个任务都要新建一个线程。频繁的创建和销毁线程的系统开销很大，占据太多的内存等系统资源和频繁的上下文切换，并且可能给系统的稳定性带来比较大的危害，因为每个系统中能创建的线程都有一个上限，不可能出现可以无限量创建线程的行为。</p>
 <p><strong>使用线程池相比于手动创建线程的好处在于</strong></p>
-<pre><code>+ 线程池可以解决线程生命周期的系统开销问题，同时也可以加快相应速度。因为线程池中的线程是可以反复使用的，不是创建好了再执行任务，而是随时准备执行任务，取消了创建线程花费的时间，因而提升了相应的速度。
-+ 线程池可以统筹内存和CPU的使用，避免资源不当使用。线程池会根据配置和任务数量灵活地控制线程数量，不足创建，过量回收，避免**线程过多导致内存溢出/线程太少导致CPU资源浪费**，达到了一个平衡。
-+ 线程池可以统一管理资源，如任务队列和线程，可以统一开始和结束任务，更加易于管理和数据统计。</code></pre><h4 id="线程池参数的含义"><a href="#线程池参数的含义" class="headerlink" title="线程池参数的含义"></a>线程池参数的含义</h4><table>
+<ul>
+<li>线程池可以解决线程生命周期的系统开销问题，同时也可以加快相应速度。因为线程池中的线程是可以反复使用的，不是创建好了再执行任务，而是随时准备执行任务，取消了创建线程花费的时间，因而提升了相应的速度。</li>
+<li>线程池可以统筹内存和CPU的使用，避免资源不当使用。线程池会根据配置和任务数量灵活地控制线程数量，不足创建，过量回收，避免<strong>线程过多导致内存溢出/线程太少导致CPU资源浪费</strong>，达到了一个平衡。</li>
+<li>线程池可以统一管理资源，如任务队列和线程，可以统一开始和结束任务，更加易于管理和数据统计。</li>
+</ul>
+<h4 id="线程池内部结构"><a href="#线程池内部结构" class="headerlink" title="线程池内部结构"></a>线程池内部结构</h4><p>线程池的内部结构主要由四个部分组成：</p>
+<pre><code>+ 线程池管理器，管理线程池的创建、销毁、添加任务等操作
++ 工作线程，从任务队列中获取任务执行
++ 任务队列，作为缓冲机制，将当下无法马上处理的任务放入到任务队列中，一般因为在多线程的环境中，所以需要保障线程安全，所以采用BlockingQueue来实现
++ 任务，任务要求实现统一的接口，方便工作线程可以处理和执行</code></pre><h4 id="线程池参数的含义"><a href="#线程池参数的含义" class="headerlink" title="线程池参数的含义"></a>线程池参数的含义</h4><table>
 <thead>
 <tr>
 <th align="center">参数名称</th>
@@ -802,6 +809,55 @@
 </ul>
 <blockquote>
 <p>综上可知，ForkJoinPool非常适合递归的任务</p>
+</blockquote>
+<h4 id="线程池常用阻塞队列"><a href="#线程池常用阻塞队列" class="headerlink" title="线程池常用阻塞队列"></a>线程池常用阻塞队列</h4><p>不同的线程池会采取不同的阻塞队列</p>
+<table>
+<thead>
+<tr>
+<th align="center">线程池</th>
+<th align="center">阻塞队列</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="center">FixedThreadPool</td>
+<td align="center">LinkedBlockingQueue</td>
+</tr>
+<tr>
+<td align="center">SingleThreadExecutor</td>
+<td align="center">LinkedBlockingQueue</td>
+</tr>
+<tr>
+<td align="center">CachedThreadPool</td>
+<td align="center">SynchronousQueue</td>
+</tr>
+<tr>
+<td align="center">ScheduledThreadPool</td>
+<td align="center">DelayedWorkQueue</td>
+</tr>
+<tr>
+<td align="center">SingleThreadScheduledExecutor</td>
+<td align="center">DelayedWorkQueue</td>
+</tr>
+</tbody></table>
+<p>对以上的队列进行逐一的介绍</p>
+<h5 id="LinkedBlockingQueue"><a href="#LinkedBlockingQueue" class="headerlink" title="LinkedBlockingQueue"></a>LinkedBlockingQueue</h5><p>容量为Integer.MAX_VALUE，理论上是可以无限扩充的。因为FixedThreadPool的线程数量是固定的，SingleThreadExecutor也是一样，所以需要没有容量限制的阻塞队列存放队列。注意的是该阻塞队列不会放满，所以线程池指挥创建核心线程数量的线程，最大线程数就没有任何的意义。</p>
+<h5 id="SynchronousQueue"><a href="#SynchronousQueue" class="headerlink" title="SynchronousQueue"></a>SynchronousQueue</h5><p>对应的线程池是理论上可以无限创建线程的CachedThreadPool，所以其实力上并不需要一个阻塞队列存储任务，因为一旦有新的任务就直接让空闲线程执行或者是创建新的线程执行。本身不存储任务，只是对任务进行转发。</p>
+<p>使用的时候如果不希望任务被拒绝，最大线程数最好设置地比较大一些，以免发生任务数大于最大线程数时（执行拒绝策略的时候），没有办法把任务放到队列中也没有足够线程来执行任务的情况。</p>
+<h5 id="DelayedWorkQueue"><a href="#DelayedWorkQueue" class="headerlink" title="DelayedWorkQueue"></a>DelayedWorkQueue</h5><p>对应线程池分别是ScheduledThreadPool和SingleThreadScheduledExecutor，最大的特点就是可以延迟执行任务。队列的特点是内部元素并不是按照放入的时间排序，而是会按照延迟的时间长短对人物进行排序，内部使用的数据结构是堆，这样的特点可以方便任务的执行。</p>
+<h4 id="为什么不该自动创建线程池？"><a href="#为什么不该自动创建线程池？" class="headerlink" title="为什么不该自动创建线程池？"></a>为什么不该自动创建线程池？</h4><h5 id="FixedThreadPool-1"><a href="#FixedThreadPool-1" class="headerlink" title="FixedThreadPool"></a>FixedThreadPool</h5><figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">static</span> ExecutorService <span class="title">newFixedThreadPool</span><span class="params">(<span class="keyword">int</span> nThreads)</span></span>&#123;</span><br><span class="line">	<span class="keyword">return</span> <span class="keyword">new</span> ThreadPoolExecutor(nThreads,nThreads,<span class="number">0L</span>,TimeUnit.MILLSECONDS,<span class="keyword">new</span> LinkedBlockingQueue&lt;Runnable&gt;());</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>如自动创建FixedThreadPool的构造函数的内部还是调用ThreadPoolExecutor函数，使用的队列是没有上限的LinkedBlockingQueue，如果处理任务的速度比较慢，队列中就会有大量的任务堆积，占用大量内存，最后导致OOM问题，从而影响到整个程序。</p>
+<h5 id="SingleThreadExecutor-1"><a href="#SingleThreadExecutor-1" class="headerlink" title="SingleThreadExecutor"></a>SingleThreadExecutor</h5><figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">static</span> ExecutorService <span class="title">newSingleThreadExecutor</span><span class="params">()</span> </span>&#123; </span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">new</span> FinalizableDelegatedExecutorService (<span class="keyword">new</span> ThreadPoolExecutor(<span class="number">1</span>, <span class="number">1</span>,<span class="number">0L</span>, TimeUnit.MILLISECONDS,<span class="keyword">new</span> LinkedBlockingQueue&lt;Runnable&gt;()));</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>和FixedThreadPool相同，只不过设置核心线程数和最大线程数为1，一样可能会导致OOM问题。</p>
+<h5 id="CachedThreadPool-1"><a href="#CachedThreadPool-1" class="headerlink" title="CachedThreadPool"></a>CachedThreadPool</h5><figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">static</span> ExecutorService <span class="title">newCachedThreadPool</span><span class="params">()</span> </span>&#123; </span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">new</span> ThreadPoolExecutor(<span class="number">0</span>, Integer.MAX_VALUE,<span class="number">60L</span>, TimeUnit.SECONDS,<span class="keyword">new</span> SynchronousQueue&lt;Runnable&gt;());</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>SynchronousQueue本身不存储任务，而是堆任务进行转发。可以注意到第二个参数为Integer.MAX_VALUE，即最大线程数的参数。因为CachedThreadPool本身不限制线程数量，如果任务数量特别多的时候，就会导致创建非常多的线程，可能超过系统的上线而无法创建新线程，或者导致内存资源不足。</p>
+<h5 id="ScheduledThreadPool和SingleThreadScheduledExecutor"><a href="#ScheduledThreadPool和SingleThreadScheduledExecutor" class="headerlink" title="ScheduledThreadPool和SingleThreadScheduledExecutor"></a>ScheduledThreadPool和SingleThreadScheduledExecutor</h5><figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="comment">// ScheduledThreadPool</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">static</span> ScheduledExecutorService <span class="title">newScheduledThreadPool</span><span class="params">(<span class="keyword">int</span> corePoolSize)</span> </span>&#123; </span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">new</span> ScheduledThreadPoolExecutor(corePoolSize);</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">// SingleThreadScheduledExecutor,ScheduledThreadPoolExecutor是ThreadPoolExecutor的子类</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="title">ScheduledThreadPoolExecutor</span><span class="params">(<span class="keyword">int</span> corePoolSize)</span> </span>&#123; </span><br><span class="line">    <span class="keyword">super</span>(corePoolSize, Integer.MAX_VALUE, <span class="number">0</span>, NANOSECONDS,<span class="keyword">new</span> DelayedWorkQueue());</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>可以看到使用的是延迟队列：DelayedWorkQueue，同时也是一个无界队列，如果存放过多的任务也可能导致OOM问题。</p>
+<blockquote>
+<p>故而默认的方法都存在一定的风险，应该在自己明确线程池的运行规则的情况下，手动创建，不仅仅可以选择更加合适的线程数量，也可以避免资源耗尽的风险</p>
 </blockquote>
 <hr>
 <h3 id="线程组和线程的优先级"><a href="#线程组和线程的优先级" class="headerlink" title="线程组和线程的优先级"></a>线程组和线程的优先级</h3><h4 id="线程组"><a href="#线程组" class="headerlink" title="线程组"></a>线程组</h4><p>Java中用ThreadGroup来表示线程组，可以对线程进行批量控制。每个Thread必然存在于一个ThreadGroup中，不能脱离而独立存在。执行main()方法的线程名称是main，如果创建new Thread的时候没有指定，将默认将父线程线程组设置为自己的线程组。</p>
