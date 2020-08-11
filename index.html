@@ -49,6 +49,50 @@
 <h4 id="使用场景"><a href="#使用场景" class="headerlink" title="使用场景"></a>使用场景</h4><p>悲观锁适用于并发写入多、临界区代码复杂、竞争积累的场景，此时悲观锁可以避免大量的无用的反复尝试的消耗</p>
 <p>乐观锁适合大部分是读取，少部分是修改的场景，也适合虽然读写多，但是并发并不激烈的情况。这些情况下，乐观锁的不加锁的特点能让性能大幅度提升。</p>
 <p>悲观锁的原始开销大于乐观锁，特点是一劳永逸，就算一直拿不到锁，也不会有额外的开销。反之如果乐观锁如果一直拿不到锁，或者并发量大，竞争激烈，导致不停重试，消耗的资源就会越来越多，甚至开销可能超过悲观锁。所以不同锁的开销要具体看使用的场景而定。</p>
+<hr>
+<h3 id="synchronized锁"><a href="#synchronized锁" class="headerlink" title="synchronized锁"></a>synchronized锁</h3><h4 id="monitor锁的获取和释放"><a href="#monitor锁的获取和释放" class="headerlink" title="monitor锁的获取和释放"></a>monitor锁的获取和释放</h4><p>sychronized就是由monitor锁实现的。每个Java对象都可以用作一个实现同步的锁，这个锁也被称作是内置锁/monitor锁，获取monitor锁的唯一方法就是进入由这个锁保护的同步代码块/方法，线程在进入被synchronized保护的代码块之前，会自动获取锁，并无论怎么退出（异常退出或者正常退出）都会自动释放锁。</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="comment">// 其中的intrinsicLock就是monitor锁</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">method</span><span class="params">()</span></span>&#123;</span><br><span class="line">	<span class="keyword">this</span>.intrinsicLock.lock();</span><br><span class="line">	<span class="keyword">try</span>&#123;</span><br><span class="line">		method body</span><br><span class="line">	&#125;</span><br><span class="line">	<span class="keyword">finally</span>&#123;</span><br><span class="line">		<span class="keyword">this</span>.intrinsicLock.unlock();</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h4 id="使用javap命令查看反汇编的结果"><a href="#使用javap命令查看反汇编的结果" class="headerlink" title="使用javap命令查看反汇编的结果"></a>使用javap命令查看反汇编的结果</h4><p>JVM实现synchronized方法和synchronized代码块的细节是不同的。</p>
+<h5 id="同步代码块"><a href="#同步代码块" class="headerlink" title="同步代码块"></a>同步代码块</h5><figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">SynTest</span> </span>&#123;</span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">synBlock</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        <span class="keyword">synchronized</span> (<span class="keyword">this</span>) &#123;</span><br><span class="line">            System.out.println(<span class="string">"lagou"</span>);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">// 反汇编的关键信息</span></span><br><span class="line"><span class="comment">// 通过执行javap -verbose xxx.class字节码文件获取</span></span><br><span class="line">  <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">synBlock</span><span class="params">()</span></span>;</span><br><span class="line">    descriptor: ()V</span><br><span class="line">    flags: ACC_PUBLIC</span><br><span class="line">    Code:</span><br><span class="line">      stack=<span class="number">2</span>, locals=<span class="number">3</span>, args_size=<span class="number">1</span></span><br><span class="line">         <span class="number">0</span>: aload_0</span><br><span class="line">         <span class="number">1</span>: dup</span><br><span class="line">         <span class="number">2</span>: astore_1</span><br><span class="line">         <span class="number">3</span>: monitorenter <span class="comment">// 加锁</span></span><br><span class="line">         4: getstatic     #2                  // Field java/lang/System.out:Ljava/io/PrintStream;</span><br><span class="line">         7: ldc           #3                      // String lagou</span><br><span class="line">         9: invokevirtual #4               // Method java/io/PrintStream.println:(Ljava/lang/String;)V</span><br><span class="line">        <span class="number">12</span>: aload_1</span><br><span class="line">        <span class="number">13</span>: monitorexit	<span class="comment">// 释放锁</span></span><br><span class="line">        <span class="number">14</span>: goto          <span class="number">22</span></span><br><span class="line">        <span class="number">17</span>: astore_2</span><br><span class="line">        <span class="number">18</span>: aload_1</span><br><span class="line">        <span class="number">19</span>: monitorexit	<span class="comment">// 释放锁</span></span><br><span class="line">        <span class="number">20</span>: aload_2</span><br><span class="line">        <span class="number">21</span>: athrow</span><br><span class="line">        <span class="number">22</span>: <span class="keyword">return</span></span><br></pre></td></tr></table></figure>
+
+<p>有两个monitorexit的原因是，JVM要保证每个monitorenter都有对应的monitorexit，monitorexit分别被插入到正常结束的位置和异常发生的位置，保证即使发生异常也会释放锁。</p>
+<ul>
+<li><p>monitorenter</p>
+<p>执行monitorenter的线程尝试获取monitor的所有权，将发生下面的三种情况之一：、</p>
+<ul>
+<li>如果该monitor计数为0，线程获取并设置为1，该线程即为拥有者</li>
+<li>线程如果已经有了该monitor，它将重新加入，并且累加计数</li>
+<li>如果其他线程拥有了该monitor，这个线程就会阻塞，直到计数为0，代表被释放了，重试获取该monitor</li>
+</ul>
+</li>
+<li><p>monitorexit</p>
+<p>作用是将monitor的计数减1，直接0为止。代表解锁，其他线程可以尝试获取这个锁。</p>
+</li>
+</ul>
+<h5 id="同步方法"><a href="#同步方法" class="headerlink" title="同步方法"></a>同步方法</h5><p>同步方法并不是依靠monitorenter和monitorexit指令来实现的，反编译后可以看到有一个ACC_SYNCHRONIZED的flag修饰符表示其为同步方法。</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">synchronized</span> <span class="keyword">void</span> <span class="title">synMethod</span><span class="params">()</span></span>&#123;</span><br><span class="line">    </span><br><span class="line">&#125;</span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">synchronized</span> <span class="keyword">void</span> <span class="title">synMethod</span><span class="params">()</span></span>;</span><br><span class="line">    descriptor: ()V</span><br><span class="line">    flags: ACC_PUBLIC, ACC_SYNCHRONIZED</span><br><span class="line">    Code:</span><br><span class="line">      stack=<span class="number">0</span>, locals=<span class="number">1</span>, args_size=<span class="number">1</span></span><br><span class="line">         <span class="number">0</span>: <span class="keyword">return</span></span><br><span class="line">      LineNumberTable:</span><br><span class="line">        line <span class="number">16</span>: <span class="number">0</span></span><br></pre></td></tr></table></figure>
+
+<p>当线程访问方法的时候，会查找是否有ACC_SYNCHRONIZED标志，有的话就要先获取到monitor锁，然后再执行方法，完成后释放锁。其他地方和同步代码块的差别并不大。</p>
+<h4 id="synchronzied和Lock的比较和选择"><a href="#synchronzied和Lock的比较和选择" class="headerlink" title="synchronzied和Lock的比较和选择"></a>synchronzied和Lock的比较和选择</h4><h5 id="相同点"><a href="#相同点" class="headerlink" title="相同点"></a>相同点</h5><ul>
+<li>两者都用来确保资源线程的安全性</li>
+<li>两者都保证可见性</li>
+<li>两者的有可重入的特性</li>
+</ul>
+<h5 id="不同点"><a href="#不同点" class="headerlink" title="不同点"></a>不同点</h5><ul>
+<li>用法上，synchronized可以加在方法上，不需要指定锁对象（可以直接指定为this），也支持同步代码块；Lock几口必须用Lock锁对象加锁和解锁，一般finally中会用unlock防止死锁。前者加锁是隐式的，后者是显式的。</li>
+<li>加锁顺序不同。synchronized解锁的顺序和枷锁的顺序必须完全相反，因为由JVM实现，执行万方法之后会自动解锁，不能自行控制；对于Lock而言，可以不完全按照枷锁的反序解锁。</li>
+<li>synchronized锁不够灵活，只能获取的线程执行完或者因为异常才会释放锁，如果持有锁的线程长时间才释放，整个程序懂得运行效率比较低。如果持有锁的线程一直不释放，其他等待的线程就只能永久等待；Lock的等待锁的过程中，如果使用的lockInterruptibly方法，可以中断退出，也可以使用tryLock等方法尝试获取锁，如果获取不到也可以中途处理别的任务。</li>
+<li>synchronized只能同时被一个线程获取，Lock可以被多个，如读写锁中的读锁（共享锁）</li>
+<li>synchronized是内置锁，由JVM实现，还分为偏向锁、轻量级锁、重量级锁；Lock根据实现的不同，有不同的原理，如ReentrantLock通过AQS获取和释放锁</li>
+<li>是否可以设置为公平锁/非公平锁，synchronized不能，Lock可以</li>
+<li>性能上，Java5之前，synchronized的性能比较差，Java6之后进行了很多的优化，如自适应自选、锁消除、锁粗话等，所以之后两者性能差不多</li>
+</ul>
+<h5 id="两个锁的选择"><a href="#两个锁的选择" class="headerlink" title="两个锁的选择"></a>两个锁的选择</h5><ul>
+<li>能两个都不用最好，推荐使用java.util.concurrent等工具类来处理所有的加锁和释放锁的操作</li>
+<li>如果可以，尽量使用synchronized，因为由JVM实现，加锁和释放锁都是自动的，一旦手动添加lock后，忘记unlock，就更容易出错</li>
+<li>如果特别需要Lock的特殊功能，如尝试获取锁、可中断、超时等功能，才使用Lock</li>
+</ul>
 </div><hr></div><div class="recent-post-item article-container"><a class="article-title" href="/2020/08/04/%E5%8D%8F%E8%AE%AE%E6%A3%AE%E6%9E%97/">协议森林</a><time class="post-meta__date"><i class="fa fa-calendar" aria-hidden="true"></i> 2020-08-04</time><span class="article-meta"><span class="article-meta__separator">|</span><i class="fa fa-inbox article-meta__icon" aria-hidden="true"></i><a class="article-meta__categories" href="/categories/%E7%BD%91%E7%BB%9C/">网络</a></span><span class="article-meta tags"><span class="article-meta__separator">|</span><i class="fa fa-tag article-meta__icon" aria-hidden="true"></i><a class="article-meta__tags" href="/tags/net/">net</a></span><div class="content"><h2 id="协议森林简介"><a href="#协议森林简介" class="headerlink" title="协议森林简介"></a>协议森林简介</h2><h4 id="发展历史"><a href="#发展历史" class="headerlink" title="发展历史"></a>发展历史</h4><ul>
 <li>一开始基本是文档的浏览，不需要记录某段时间浏览了什么文档</li>
 <li>交互式web应用的兴起，需要管理会话<ul>
