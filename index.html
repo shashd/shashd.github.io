@@ -33,7 +33,7 @@
 <h5 id="Java7中的ConcurrentHashMap结构"><a href="#Java7中的ConcurrentHashMap结构" class="headerlink" title="Java7中的ConcurrentHashMap结构"></a>Java7中的ConcurrentHashMap结构</h5><p>内部进行了Segment分段，每个Segment继承了ReentranLock，各个Segment都是独立上锁并且不会互相影响的。相比于HashTable将整个对象锁住相比，并发效率大大提升。</p>
 <p>Segment的底层数据结构还是数组和链表组成的拉链法结构。默认有0-15共16个Segment。初始化的时候可以设置该数值为其他，但是一旦初始化后是不可以扩容的。</p>
 <h5 id="Java8中的ConcurrentHashMap"><a href="#Java8中的ConcurrentHashMap" class="headerlink" title="Java8中的ConcurrentHashMap"></a>Java8中的ConcurrentHashMap</h5><p>几乎重写了ConcurrentHashMap，从原来的1000多行代码到了现在的6000行代码。</p>
-<p>不同的是当链表长度大于一个阈值的时候（默认为8），并且满足一定的容量要求，就会将链表转换成红黑树，提升查找的性能，避免极端情况下冲突链表非常长的情况。</p>
+<p>不同的是当链表长度大于一个阈值的时候（默认为8），并且满足一定的容量要求，即容量大于等于MIN_TREEFY_CAPACITY（默认为64），就会将链表转换成红黑树，提升查找的性能，避免极端情况下冲突链表非常长的情况。</p>
 <h6 id="源码分析-1"><a href="#源码分析-1" class="headerlink" title="源码分析"></a>源码分析</h6><p><strong>Node节点</strong></p>
 <figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="keyword">static</span> <span class="class"><span class="keyword">class</span> <span class="title">Node</span>&lt;<span class="title">N</span>,<span class="title">V</span>&gt; <span class="title">implementS</span> <span class="title">Map</span>.<span class="title">Entry</span>&lt;<span class="title">K</span>,<span class="title">V</span>&gt;</span>&#123;</span><br><span class="line">    <span class="keyword">final</span> <span class="keyword">int</span> hash;</span><br><span class="line">    <span class="keyword">final</span> K key;</span><br><span class="line">    <span class="keyword">volatile</span> V val;<span class="comment">// 保证val的可见性</span></span><br><span class="line">    <span class="keyword">volatile</span> Node&lt;N,V&gt; next;<span class="comment">// 指向下一个的节点</span></span><br><span class="line">    <span class="comment">// ...</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 
@@ -71,6 +71,44 @@
 </ul>
 </li>
 </ul>
+<h5 id="为什么转红黑树的阈值设置为8？"><a href="#为什么转红黑树的阈值设置为8？" class="headerlink" title="为什么转红黑树的阈值设置为8？"></a>为什么转红黑树的阈值设置为8？</h5><p>一开始是需要将链表转换为为红黑树的，链表的查询时间复杂度为O(N)，红黑树查询的时间复杂度为O(logN)，随着链表越来越长，查询的效率就越低下，所以为了提升查询的性能，需要转换为红黑树。不一开始就设置为红黑树的原因：单个TreeNode占用的空间是普通Node的两倍，所以只有当包含足够多的Node时才会转换成TreeNode。</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="comment">// 源码中对设置为8这个数字进行了说明</span></span><br><span class="line">In usages with well-distributed user hashCodes, tree bins </span><br><span class="line">are rarely used.  Ideally, under random hashCodes, the </span><br><span class="line">frequency of nodes in bins follows a Poisson distribution </span><br><span class="line">(http:<span class="comment">//en.wikipedia.org/wiki/Poisson_distribution) with a </span></span><br><span class="line">parameter of about <span class="number">0.5</span> on average <span class="keyword">for</span> the <span class="keyword">default</span> resizing </span><br><span class="line">threshold of <span class="number">0.75</span>, although with a large variance because </span><br><span class="line">of resizing granularity. Ignoring variance, the expected </span><br><span class="line"><span class="function">occurrences of list size k <span class="title">are</span> <span class="params">(exp(<span class="number">-0.5</span>)</span> * <span class="title">pow</span><span class="params">(<span class="number">0.5</span>, k)</span> / </span></span><br><span class="line"><span class="function"><span class="title">factorial</span><span class="params">(k)</span>). The first values are:</span></span><br><span class="line"><span class="function"> </span></span><br><span class="line"><span class="function"> 0:    0.60653066</span></span><br><span class="line"><span class="function"> 1:    0.30326533</span></span><br><span class="line"><span class="function"> 2:    0.07581633</span></span><br><span class="line"><span class="function"> 3:    0.01263606</span></span><br><span class="line"><span class="function"> 4:    0.00157952</span></span><br><span class="line"><span class="function"> 5:    0.00015795</span></span><br><span class="line"><span class="function"> 6:    0.00001316</span></span><br><span class="line"><span class="function"> 7:    0.00000094</span></span><br><span class="line"><span class="function"> 8:    0.00000006</span></span><br><span class="line"><span class="function"> more: less than 1 in ten million</span></span><br></pre></td></tr></table></figure>
+
+<p>上述的意思是，如果hashCode分布良好，红黑树的形式会很少被用到，因为很少出现链表长懂得情况。理想情况下，链表长度符合泊松分布，各个长度的命中概率依次递减，当长度为8的时候，概率仅仅为0.000000006，小于千万分之一，而且通常Map中并不会存储如此多的数据，所以通常不会从链表转换为红黑树。</p>
+<p>事实上，转换为红黑树的设置更多是为了防止用户自己实现不好的哈希算法时导致链表过长的问题，此时的转换更多是一种保底的策略，保证极端情况下查询的效率</p>
+<h5 id="ConcurrentHashMap和Hashtable的区别"><a href="#ConcurrentHashMap和Hashtable的区别" class="headerlink" title="ConcurrentHashMap和Hashtable的区别"></a>ConcurrentHashMap和Hashtable的区别</h5><p>ConcurrentHashMap和Hashtable都是线程安全的，但是各种方面上有所不同</p>
+<ul>
+<li><p>出现的版本的不同</p>
+<ul>
+<li>ConcurrentHashMapJDK1.5后才出现</li>
+<li>Hashtable在JDK1.0的时期就存在了，JDK1.2时期实现了Map接口</li>
+</ul>
+</li>
+<li><p>实现线程安全的方式的不同</p>
+<ul>
+<li>Hashtable通过synchronized关键字实现线程安全，几乎所有的方法都被synchronized修改</li>
+<li>ConcurrentHashMap通过CAS + synchronized + Node节点的方式实现线程安全</li>
+</ul>
+</li>
+<li><p>性能表现的不同</p>
+<ul>
+<li>线程数量增加时，Hashtable的性能急剧下降，并且每次都要锁住整个对象，上下文切换的开销大，吞吐量差，甚至可能不如单线程</li>
+<li>ConcurrentHashMap上锁是部分上锁的，吞吐量大</li>
+</ul>
+</li>
+<li><p>迭代时修改的不同</p>
+<ul>
+<li><p>Hashtable不允许在迭代期间修改内容，否则会抛出ConcurrentModificationException异常，其原理是检测modCount变量</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> T <span class="title">next</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="comment">// expectedModCount是迭代器生成的时候随之生成的，不会改变</span></span><br><span class="line">    <span class="comment">// 当迭代的过程中对Hashtable的内容做了修改，modCount会有所反应</span></span><br><span class="line">    <span class="keyword">if</span> (modCount != expectedModCount)</span><br><span class="line">        <span class="keyword">throw</span> <span class="keyword">new</span> ConcurrentModificationException();</span><br><span class="line">    <span class="keyword">return</span> nextElement();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>ConcurrentHashMap在迭代期间修改内容，也不会抛出异常</p>
+</li>
+</ul>
+</li>
+</ul>
+<blockquote>
+<p>Hashtable现在已经并不推荐使用</p>
+</blockquote>
 </div><hr></div><div class="recent-post-item article-container"><a class="article-title" href="/2020/08/08/Java%E5%B9%B6%E5%8F%91%E7%BC%96%E7%A8%8B%E4%B9%8B%E4%BA%8C%EF%BC%9A%E5%B9%B6%E5%8F%91%E9%94%81/">Java并发编程之二：并发锁</a><time class="post-meta__date"><i class="fa fa-calendar" aria-hidden="true"></i> 2020-08-08</time><span class="article-meta"><span class="article-meta__separator">|</span><i class="fa fa-inbox article-meta__icon" aria-hidden="true"></i><a class="article-meta__categories" href="/categories/%E5%90%8E%E7%AB%AF/">后端</a></span><span class="article-meta tags"><span class="article-meta__separator">|</span><i class="fa fa-tag article-meta__icon" aria-hidden="true"></i><a class="article-meta__tags" href="/tags/java/">java</a><span class="article-meta__link">-</span><i class="fa fa-tag article-meta__icon" aria-hidden="true"></i><a class="article-meta__tags" href="/tags/concurrent/">concurrent</a></span><div class="content"><h2 id="Java并发编程之一：并发锁"><a href="#Java并发编程之一：并发锁" class="headerlink" title="Java并发编程之一：并发锁"></a>Java并发编程之一：并发锁</h2><h3 id="锁的分类标准和简介"><a href="#锁的分类标准和简介" class="headerlink" title="锁的分类标准和简介"></a>锁的分类标准和简介</h3><p>可以根据分类标准将锁分为7大类型，分别是：</p>
 <ul>
 <li>偏向锁/轻量级锁/重量级锁</li>
