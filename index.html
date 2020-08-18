@@ -1305,6 +1305,21 @@
 <p>可以看到，虽然两个线程使用的同一个ThreadLocal实例（通过构造方法传入），但是它们各自可以存取自己当前线程的一个值。那ThreadLocal有什么作用呢？如果只是单纯的想要线程隔离，在每个线程中声明一个私有变量就好了呀，为什么要使用ThreadLocal？如果开发者希望将类的某个静态变量（user ID或者transaction ID）与线程状态关联，则可以考虑使用ThreadLocal。</p>
 <p>最常见的ThreadLocal使用场景为用来解决数据库连接、Session管理等。数据库连接和Session管理涉及多个复杂对象的初始化和关闭。如果在每个线程中声明一些私有变量来进行操作，那这个线程就变得不那么“轻量”了，需要频繁的创建和关闭连接。</p>
 <h5 id="InheritableThreadLocal"><a href="#InheritableThreadLocal" class="headerlink" title="InheritableThreadLocal"></a>InheritableThreadLocal</h5><p>和ThreadLocal差不多，不同的是对于InheritableThreadLocal来说，不仅仅是当前线程可以存取副本值，而且它的子线程也可以存取这个副本值。</p>
+<h3 id="阻塞队列"><a href="#阻塞队列" class="headerlink" title="阻塞队列"></a>阻塞队列</h3><p>阻塞队列，即BlockingQueue，是一个如下的接口：</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">interface</span> <span class="title">BlockingQueue</span>&lt;<span class="title">E</span>&gt; <span class="keyword">extends</span> <span class="title">Queue</span>&lt;<span class="title">E</span>&gt;</span>&#123;...&#125;</span><br></pre></td></tr></table></figure>
+
+<p>继承了Queue接口，BlockingQueue是线程安全的，队列可以安全地从一个线程向另外一个线程传递数据，所以生产者/消费者可以直接使用线程安全的阻塞队列。</p>
+<p>另外，队列同时起到了一个隔离的作用。如银行转账的程序，生产者不用关心具体的逻辑，只要将转账任务传到队列中即可。实现了具体任务和执行任务类之间的解耦。</p>
+<h4 id="主要并发队列"><a href="#主要并发队列" class="headerlink" title="主要并发队列"></a>主要并发队列</h4><p>Java提供线程安全的队列（并发队列），分为阻塞队列和非阻塞队列两个类别。</p>
+<p>阻塞队列的典型就是BlockingQueue接口的实现类，分别又6种主要的实现：ArrayBlockingQueue、LinkedBlockingQueue、SynchronousQueue、DelayQueue、PriorityBlockingQueue、LinkedTransferQueue，之后将对这些队列的特点进行展开描述。</p>
+<p>非阻塞队列的典型就是ConcurrentLinkedQueue，这个类不会让线程阻塞，利用CAS保证了线程的安全。</p>
+<p>可以根据需求自由选择阻塞队列和非阻塞队列实现业务需求。</p>
+<h4 id="阻塞队列的特点"><a href="#阻塞队列的特点" class="headerlink" title="阻塞队列的特点"></a>阻塞队列的特点</h4><p>阻塞功能使得生产者和消费者的能力得到平衡，当有一端的速度太快的时候，阻塞队列就会将一方的速度降低。实现阻塞的最重要的两个方法i是take和put方法</p>
+<h5 id="take方法"><a href="#take方法" class="headerlink" title="take方法"></a>take方法</h5><p>功能是获取并移除队列的头节点，队列中有数据可以正常移除，一旦没有数据，发生阻塞，直到队列中有数据，那么就会解除阻塞状态，得到数据。</p>
+<h5 id="put方法"><a href="#put方法" class="headerlink" title="put方法"></a>put方法</h5><p>插入元素的时候，如果队列没有满，一切正常，如果已满，无法继续插入，发生阻塞。如果队列中有了空闲的空间，就会解除阻塞状态，插入数据到队列中。</p>
+<h5 id="容量大小"><a href="#容量大小" class="headerlink" title="容量大小"></a>容量大小</h5><p>阻塞队列的容量大小分为有界和无界。</p>
+<p>无界意味着可以容纳非常多的数据，如LinkedBlockingQueue，上线为Integer.MAX_VALUE，可以近似认为无限容量。</p>
+<p>有界如ArrayBlockingQueue，如果容量满了是不会进行扩容的操作。</p>
 <h3 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h3><ul>
 <li>[深入浅出Java多线程]：<a href="https://redspider.gitbook.io/concurrent/" target="_blank" rel="noopener">https://redspider.gitbook.io/concurrent/</a> </li>
 <li>《Java并发编程实践》</li>
